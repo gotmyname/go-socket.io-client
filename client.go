@@ -1,6 +1,7 @@
 package socketio_client
 
 import (
+  "net/http"
 	"net/url"
 	"path"
 	"reflect"
@@ -23,6 +24,8 @@ type Client struct {
 	acks       map[int]*caller
 	id         int
 	namespace  string
+  
+  data       interface{}
 }
 
 func NewClient(uri string, opts *Options) (client *Client, err error) {
@@ -203,6 +206,38 @@ func (client *Client) onAck(id int, decoder *decoder, packet *packet) error {
 	}
 	c.Call(args)
 	return nil
+}
+
+func (client *Client) Id() string {
+  return ""
+}
+
+func (client *Client) Rooms() []string {
+  return []string{}
+}
+
+func (client *Client) Request() *http.Request {
+  return nil
+}
+
+func (client *Client) Join(room string) error {
+  return nil
+}
+
+func (client *Client) Leave(room string) error {
+  return nil
+}
+
+func (client *Client) BroadcastTo(room, event string, args ...interface{}) error {
+  return nil
+}
+
+func (client *Client) Data() interface{} {
+	return client.data
+}
+
+func (client *Client) SetData(data interface{}) {
+	client.data = data
 }
 
 func (client *Client) readLoop() error {
