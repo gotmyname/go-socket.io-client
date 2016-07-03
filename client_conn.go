@@ -259,21 +259,24 @@ func (c *clientConn) onOpen() error {
 	if err != nil {
 		return err
 	}
+  
+  creater, exists := creaters["websocket"]
+  if !exists {
+    return InvalidError
+  }
 
-	creater, exists := creaters["polling"]
-	if !exists {
-		return InvalidError
-	}
+  c.request.URL.Scheme = "ws"
+  q := c.request.URL.Query()
+  q.Set("EIO", "3")
+  q.Set("transport", "websocket")
+  c.request.URL.RawQuery = q.Encode()
 
-	q := c.request.URL.Query()
-	q.Set("transport", "polling")
-	c.request.URL.RawQuery = q.Encode()
+  transport, err := creater.Client(c.request)
+  if err != nil {
+    return err
+  }
 
-	transport, err := creater.Client(c.request)
-	if err != nil {
-		return err
-	}
-	c.setCurrent("polling", transport)
+	c.setCurrent("websocket", transport)
 
 	pack, err := c.getCurrent().NextReader()
 	if err != nil {
@@ -285,7 +288,6 @@ func (c *clientConn) onOpen() error {
 	if err != nil {
 		return err
 	}
-	//fmt.Println(string(p))
 
 	type connectionInfo struct {
 		Sid          string        `json:"sid"`
@@ -302,67 +304,18 @@ func (c *clientConn) onOpen() error {
 	msg.PingInterval *= 1000 * 1000
 	msg.PingTimeout *= 1000 * 1000
 
-	//fmt.Println(msg)
-
 	c.pingInterval = msg.PingInterval
 	c.pingTimeout = msg.PingTimeout
 	c.id = msg.Sid
 
-	c.getCurrent().Close()
-
-	q.Set("sid", c.id)
-	c.request.URL.RawQuery = q.Encode()
-
-	transport, err = creater.Client(c.request)
-	if err != nil {
-		return err
-	}
-	c.setCurrent("polling", transport)
-
-	pack, err = c.getCurrent().NextReader()
-	if err != nil {
-		return err
-	}
-
-	p2 := make([]byte, 4096)
-	l, err = pack.Read(p2)
-	if err != nil {
-		return err
-	}
-	//fmt.Println(string(p2))
-
-	if c.transportName == "polling" {
-		//over
-	} else if c.transportName == "websocket" {
-		//upgrade
-		creater, exists = creaters["websocket"]
-		if !exists {
-			return InvalidError
-		}
-
-		c.request.URL.Scheme = "ws"
-		q.Set("sid", c.id)
-		q.Set("transport", "websocket")
-		c.request.URL.RawQuery = q.Encode()
-
-		transport, err = creater.Client(c.request)
-		if err != nil {
-			return err
-		}
-		c.setUpgrading("websocket", transport)
-
-		w, err := c.getUpgrade().NextWriter(message.MessageText, parser.PING)
-		if err != nil {
-			return err
-		}
-		w.Write([]byte("probe"))
-		w.Close()
-	} else {
-		return InvalidError
-	}
-
-	//fmt.Println("end")
-
+  /*
+  w, err := c.getCurrent().NextWriter(message.MessageText, parser.PING)
+  if err != nil {
+    return err
+  }
+  w.Write([]byte("probe"))
+  w.Close()
+  */
 	return nil
 }
 
