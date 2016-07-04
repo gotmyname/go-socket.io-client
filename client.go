@@ -232,6 +232,10 @@ func (client *Client) BroadcastTo(room, event string, args ...interface{}) error
   return nil
 }
 
+func (client *Client) RemoteAddr() string {
+	return client.conn.url.Host
+}
+
 func (client *Client) Data() interface{} {
 	return client.data
 }
