@@ -58,9 +58,11 @@ func NewClient(uri string, opts *Options) (client *Client, err error) {
 		acks:   make(map[int]*caller),
 	}
 
-	go client.readLoop()
-
 	return
+}
+
+func (client *Client) Go() {
+	go client.readLoop()
 }
 
 func (client *Client) On(message string, f interface{}) (err error) {
