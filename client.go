@@ -246,6 +246,10 @@ func (client *Client) SetData(data interface{}) {
 	client.data = data
 }
 
+func (client *Client) Close() {
+	client.conn.Close()
+}
+
 func (client *Client) readLoop() error {
 	defer func() {
 		p := packet{
